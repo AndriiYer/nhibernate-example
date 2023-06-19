@@ -26,26 +26,14 @@ public class ProductsController : ApiControllerBase
         await _productsService.GetAllProductsAsync(token);
 
     [HttpPut("{productId}/category/{categoryId}")]
-    public async Task<IActionResult> AddProductToCategoryAsync(Guid categoryId, Guid productId, CancellationToken token)
-    {
+    public async Task AddProductToCategoryAsync(Guid categoryId, Guid productId, CancellationToken token) =>
         await _productsService.AddProductToCategoryAsync(categoryId, productId, token);
 
-        return Ok($"The product {productId} added to the category {categoryId}");
-    }
-
     [HttpDelete("{productId}/category/{categoryId}")]
-    public async Task<IActionResult> RemoveProductFromCategoryAsync(Guid categoryId, Guid productId, CancellationToken token)
-    {
+    public async Task RemoveProductFromCategoryAsync(Guid categoryId, Guid productId, CancellationToken token) =>
         await _productsService.RemoveProductFromCategoryAsync(categoryId, productId, token);
 
-        return Ok($"The product {productId} removed from the category {categoryId}");
-    }
-
     [HttpPost("{productId}/book")]
-    public async Task<IActionResult> BookProductAsync([FromQuery]Guid productId, [FromBody]ProductBookingModel productBookingModel, CancellationToken token)
-    {
+    public async Task BookProductAsync([FromQuery] Guid productId, [FromBody] ProductBookingModel productBookingModel, CancellationToken token) =>
         await _productsService.BookProductAsync(productId, productBookingModel, token);
-
-        return Ok($"The product {productId} was booked successfully");
-    }
 }

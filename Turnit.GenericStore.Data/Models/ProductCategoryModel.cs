@@ -4,6 +4,6 @@
     {
         public Guid? CategoryId { get; set; }
 
-        public IEnumerable<ProductModel>? Products { get; set; }
+        public IEnumerable<ProductModel> Products { get; set; } = default!;
     }
 }

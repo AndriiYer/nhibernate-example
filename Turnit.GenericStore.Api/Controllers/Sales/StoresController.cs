@@ -17,11 +17,7 @@ namespace Turnit.GenericStore.Api.Controllers.Sales
         }
 
         [HttpPost("{storeId}/restock")]
-        public async Task<IActionResult> RestockProductAsync([FromQuery] Guid storeId, [FromBody] ProductRestockModel productRestockModel, CancellationToken token)
-        {
+        public async Task RestockProductAsync([FromQuery] Guid storeId, [FromBody] ProductRestockModel productRestockModel, CancellationToken token) => 
             await _storesService.RestockProductAsync(storeId, productRestockModel, token);
-
-            return Ok($"The store {storeId} was restocked successfully");
-        }
     }
 }

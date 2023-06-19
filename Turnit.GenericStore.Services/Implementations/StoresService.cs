@@ -23,9 +23,8 @@ namespace Turnit.GenericStore.Services.Implementations
 
             productAvailability.Availability = productAvailability.Availability + productRestockModel.Count;
 
-            using var transaction = Session.BeginTransaction();
             await Session.UpdateAsync(productAvailability, token);
-            await transaction.CommitAsync(token);
+            await Session.FlushAsync(token);
         }
     }
 }

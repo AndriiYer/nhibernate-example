@@ -1,5 +1,6 @@
 ﻿using FluentNHibernate.Mapping;
 using NHibernate;
+using NHibernate.Linq;
 using NHibernate.Transform;
 using System.Transactions;
 using Turnit.GenericStore.Data.Entities;
@@ -34,7 +35,6 @@ namespace Turnit.GenericStore.Services.Implementations
                 throw new ArgumentException("Provided wrong categoryId");
             }
 
-            using var transaction = Session.BeginTransaction();
             var producteCategory = new ProductCategory
             {
                 Id = Guid.NewGuid(),
@@ -43,7 +43,7 @@ namespace Turnit.GenericStore.Services.Implementations
             };
 
             await Session.SaveAsync(producteCategory, token);
-            await transaction.CommitAsync(token);
+            await Session.FlushAsync(token);
         }
 
         public async Task RemoveProductFromCategoryAsync(Guid categoryId, Guid productId, CancellationToken token = default)
@@ -54,9 +54,8 @@ namespace Turnit.GenericStore.Services.Implementations
                 throw new ArgumentException("Provided wrong arguments");
             }
 
-            using var transaction = Session.BeginTransaction();
             await Session.DeleteAsync(productCategory, token);
-            await transaction.CommitAsync(token);
+            await Session.FlushAsync(token);
         }
 
         /// <summary>
@@ -64,19 +63,31 @@ namespace Turnit.GenericStore.Services.Implementations
         /// </summary>
         public async Task<IEnumerable<ProductCategoryModel>> GetAllProductsAsync(CancellationToken token = default)
         {
-            var query = Session.CreateSQLQuery(@"
-                SELECT  pc.category_id AS CategoryId, pa.id AS ProductId, pa.name AS ProductName, pa.store_id AS StoreId, pa.availability AS Availability
-                FROM
-                    (SELECT p.id, p.name, a.store_id, a.availability
-                    FROM product p
-                    LEFT JOIN product_availability a
-                    ON p.id = a.product_id
-                    ) AS pa
-                LEFT JOIN product_category pc
-                ON pa.id = pc.product_id
-                ").SetResultTransformer(Transformers.AliasToBean<ProductCategoryItem>());
+            var query = Session
+                .Query<Product>()
+                .LeftJoin(
+                    Session.Query<ProductAvailability>(),
+                    product => product.Id,
+                    productAvailability => productAvailability.Product.Id,
+                    (product, productAvailability) => new
+                    {
+                        Product = product,
+                        Availability = productAvailability
+                    })
+                .LeftJoin(
+                    Session.Query<ProductCategory>(),
+                    product => product.Product.Id,
+                    productCategory => productCategory.Product.Id,
+                    (product, productCategory) => new ProductCategoryItem
+                    {
+                        ProductId = product.Product.Id,
+                        ProductName = product.Product.Name,
+                        StoreId = product.Availability.Store.Id,
+                        Availability = product.Availability.Availability,
+                        CategoryId = productCategory.Category == null ? null : productCategory.Category.Id
+                    });
 
-            var result = (await query.ListAsync<ProductCategoryItem>(token))
+            var result = (await query.ToListAsync())
                 .GroupBy(x => new { x.ProductId, x.ProductName, x.CategoryId })
                 .Select(x => new
                 {
@@ -156,9 +167,8 @@ namespace Turnit.GenericStore.Services.Implementations
 
             productAvailability.Availability = productAvailability.Availability - productBookingModel.Count;
 
-            using var transaction = Session.BeginTransaction();
             await Session.UpdateAsync(productAvailability, token);
-            await transaction.CommitAsync(token);
+            await Session.FlushAsync(token);
         }
 
         private async Task<ProductCategory> GetProductCategory(Guid categoryId, Guid productId, CancellationToken token) =>
