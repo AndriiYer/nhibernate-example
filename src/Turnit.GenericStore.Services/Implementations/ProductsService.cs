@@ -1,5 +1,7 @@
-﻿using NHibernate;
+﻿using FluentNHibernate.Mapping;
+using NHibernate;
 using NHibernate.Transform;
+using System.Transactions;
 using Turnit.GenericStore.Data.Entities;
 using Turnit.GenericStore.Data.Models;
 using Turnit.GenericStore.Data.Values;
@@ -12,69 +14,49 @@ namespace Turnit.GenericStore.Services.Implementations
 
         public ProductsService(ISession session) : base(session) { }
 
-        public async Task<bool> AddProductToCategoryAsync(Guid categoryId, Guid productId, CancellationToken token = default)
+        public async Task AddProductToCategoryAsync(Guid categoryId, Guid productId, CancellationToken token = default)
         {
-            var productCategory = await GetProductCategory(categoryId, productId);
+            var productCategory = await GetProductCategory(categoryId, productId, token);
             if (productCategory != null)
             {
-                return false;
+                throw new ArgumentException("Provided wrong arguments. The product is already in the category");
+            }
+
+            var product = await Session.GetAsync<Product>(productId);
+            if (product == null)
+            {
+                throw new ArgumentException("Provided wrong productId");
+            }
+
+            var category = await Session.GetAsync<Category>(categoryId);
+            if (product == null)
+            {
+                throw new ArgumentException("Provided wrong categoryId");
             }
 
             using var transaction = Session.BeginTransaction();
-            try
+            var producteCategory = new ProductCategory
             {
-                var product = await Session.GetAsync<Product>(productId);
-                if (product == null)
-                {
-                    transaction.Rollback();
-                    return false;
-                }
+                Id = Guid.NewGuid(),
+                Category = category,
+                Product = product
+            };
 
-                var category = await Session.GetAsync<Category>(categoryId);
-                if (product == null)
-                {
-                    transaction.Rollback();
-                    return false;
-                }
-
-                var producteCategory = new ProductCategory
-                {
-                    Id = Guid.NewGuid(),
-                    Category = category,
-                    Product = product
-                };
-
-                await Session.SaveAsync(producteCategory, token);
-                await transaction.CommitAsync(token);
-            }
-            catch (Exception)
-            {
-                await transaction.RollbackAsync();
-            }
-
-            return true;
+            await Session.SaveAsync(producteCategory, token);
+            await transaction.CommitAsync(token);
         }
 
-        public async Task<bool> RemoveProductFromCategoryAsync(Guid categoryId, Guid productId, CancellationToken token = default)
+        public async Task RemoveProductFromCategoryAsync(Guid categoryId, Guid productId, CancellationToken token = default)
         {
-            var productCategory = await GetProductCategory(categoryId, productId);
+            var productCategory = await GetProductCategory(categoryId, productId, token);
             if (productCategory == null)
             {
-                return false;
+                throw new ArgumentException("Provided wrong arguments");
             }
 
             using var transaction = Session.BeginTransaction();
-            try
-            {
-                await Session.DeleteAsync(productCategory, token);
-                await transaction.CommitAsync(token);
-            }
-            catch (Exception)
-            {
-                await transaction.RollbackAsync();
-            }
-
-            return true;
+            await Session.DeleteAsync(productCategory, token);
+            await transaction.CommitAsync(token);
         }
 
         /// <summary>
@@ -155,10 +137,34 @@ namespace Turnit.GenericStore.Services.Implementations
             return result.ToArray();
         }
 
-        private async Task<ProductCategory> GetProductCategory(Guid categoryId, Guid productId) =>
+        public async Task BookProductAsync(Guid productId, ProductBookingModel productBookingModel, CancellationToken token = default)
+        {
+            var productAvailability = await Session.QueryOver<ProductAvailability>()
+                .Where(x => x.Store.Id == productBookingModel.StoreId)
+                .Where(x => x.Product.Id == productId)
+                .SingleOrDefaultAsync(token);
+
+            if (productAvailability == null)
+            {
+                throw new ArgumentException("Provided wrong arguments");
+            }
+
+            if(productAvailability.Availability < productBookingModel.Count)
+            {
+                throw new ArgumentException("Product availability is less than booking count");
+            }
+
+            productAvailability.Availability = productAvailability.Availability - productBookingModel.Count;
+
+            using var transaction = Session.BeginTransaction();
+            await Session.UpdateAsync(productAvailability, token);
+            await transaction.CommitAsync(token);
+        }
+
+        private async Task<ProductCategory> GetProductCategory(Guid categoryId, Guid productId, CancellationToken token) =>
             await Session.QueryOver<ProductCategory>()
                 .Where(x => x.Category.Id == categoryId)
                 .Where(x => x.Product.Id == productId)
-                .SingleOrDefaultAsync();
+                .SingleOrDefaultAsync(token);
     }
 }

@@ -8,8 +8,10 @@ namespace Turnit.GenericStore.Services.Contacts
 
         Task<IEnumerable<ProductCategoryModel>> GetAllProductsAsync(CancellationToken token = default);
 
-        Task<bool> AddProductToCategoryAsync(Guid categoryId, Guid productId, CancellationToken token);
+        Task AddProductToCategoryAsync(Guid categoryId, Guid productId, CancellationToken token = default);
 
-        Task<bool> RemoveProductFromCategoryAsync(Guid categoryId, Guid productId, CancellationToken token);
+        Task RemoveProductFromCategoryAsync(Guid categoryId, Guid productId, CancellationToken token = default);
+
+        Task BookProductAsync(Guid productId, ProductBookingModel productBookingModel, CancellationToken token = default);
     }
 }

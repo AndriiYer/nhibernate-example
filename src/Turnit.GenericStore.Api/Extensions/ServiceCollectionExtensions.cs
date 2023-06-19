@@ -10,6 +10,7 @@ namespace Turnit.GenericStore.Api.Extensions
         {
             services.AddScoped<ICategoriesService, CategoriesService>();
             services.AddScoped<IProductsService, ProductsService>();
+            services.AddScoped<IStoresService, StoresService>();
 
             return services;
         }

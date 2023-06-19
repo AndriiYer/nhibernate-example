@@ -7,6 +7,7 @@
   </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="NHibernate" Version="5.3.12" />
         <PackageReference Include="FluentNHibernate" Version="3.1.0" />
         <PackageReference Include="Npgsql" Version="6.0.4" />

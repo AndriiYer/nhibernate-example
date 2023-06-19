@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using NHibernate;
 using Turnit.GenericStore.Api.Extensions;
@@ -71,6 +72,8 @@ namespace Turnit.GenericStore.Api
                 .UseSwaggerUI(x => x.SwaggerEndpoint("v1/swagger.json", "Turnit Store V1"));
 
             app.UseAuthorization();
+
+            app.ConfigureExceptionHandler(env);
 
             app.UseEndpoints(endpoints =>
             {

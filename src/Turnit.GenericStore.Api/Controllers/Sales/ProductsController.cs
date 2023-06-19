@@ -28,26 +28,24 @@ public class ProductsController : ApiControllerBase
     [HttpPut("{productId}/category/{categoryId}")]
     public async Task<IActionResult> AddProductToCategoryAsync(Guid categoryId, Guid productId, CancellationToken token)
     {
-        var created = await _productsService.AddProductToCategoryAsync(categoryId, productId, token);
+        await _productsService.AddProductToCategoryAsync(categoryId, productId, token);
 
-        if(created)
-        {
-            return Ok($"The product {productId} added to the category {categoryId}");
-        }
-
-        return BadRequest($"Error when adding the product {productId} to the category {categoryId}. Presented data was wrong");
+        return Ok($"The product {productId} added to the category {categoryId}");
     }
 
     [HttpDelete("{productId}/category/{categoryId}")]
     public async Task<IActionResult> RemoveProductFromCategoryAsync(Guid categoryId, Guid productId, CancellationToken token)
     {
-        var created = await _productsService.RemoveProductFromCategoryAsync(categoryId, productId, token);
+        await _productsService.RemoveProductFromCategoryAsync(categoryId, productId, token);
 
-        if (created)
-        {
-            return Ok($"The product {productId} removed from the category {categoryId}");
-        }
+        return Ok($"The product {productId} removed from the category {categoryId}");
+    }
 
-        return BadRequest($"Error when removing the product {productId} to the category {categoryId}. Presented data was wrong");
+    [HttpPost("{productId}/book")]
+    public async Task<IActionResult> BookProductAsync([FromQuery]Guid productId, [FromBody]ProductBookingModel productBookingModel, CancellationToken token)
+    {
+        await _productsService.BookProductAsync(productId, productBookingModel, token);
+
+        return Ok($"The product {productId} was booked successfully");
     }
 }
