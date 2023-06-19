@@ -9,7 +9,7 @@ namespace Turnit.GenericStore.Data.Models.Validators
         public ProductBookingModelValidator() 
         {
             RuleFor(model => model.StoreId).NotEmpty();
-            RuleFor(model => model.Count).GreaterThanOrEqualTo(0);
+            RuleFor(model => model.Quantity).GreaterThanOrEqualTo(0);
         }
     }
 }

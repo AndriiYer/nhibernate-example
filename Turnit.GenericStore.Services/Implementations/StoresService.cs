@@ -21,7 +21,7 @@ namespace Turnit.GenericStore.Services.Implementations
                 throw new ArgumentException("Provided wrong arguments");
             }
 
-            productAvailability.Availability = productAvailability.Availability + productRestockModel.Count;
+            productAvailability.Availability = productAvailability.Availability + productRestockModel.Quantity;
 
             await Session.UpdateAsync(productAvailability, token);
             await Session.FlushAsync(token);

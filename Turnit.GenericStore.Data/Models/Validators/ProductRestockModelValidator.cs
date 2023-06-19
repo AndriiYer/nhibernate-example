@@ -9,7 +9,7 @@ namespace Turnit.GenericStore.Data.Models.Validators
         public ProductRestockModelValidator() 
         {
             RuleFor(model => model.ProductId).NotEmpty();
-            RuleFor(model => model.Count).GreaterThanOrEqualTo(0);
+            RuleFor(model => model.Quantity).GreaterThanOrEqualTo(0);
         }
     }
 }

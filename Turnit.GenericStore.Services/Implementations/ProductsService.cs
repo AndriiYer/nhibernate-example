@@ -160,12 +160,12 @@ namespace Turnit.GenericStore.Services.Implementations
                 throw new ArgumentException("Provided wrong arguments");
             }
 
-            if(productAvailability.Availability < productBookingModel.Count)
+            if(productAvailability.Availability < productBookingModel.Quantity)
             {
                 throw new ArgumentException("Product availability is less than booking count");
             }
 
-            productAvailability.Availability = productAvailability.Availability - productBookingModel.Count;
+            productAvailability.Availability = productAvailability.Availability - productBookingModel.Quantity;
 
             await Session.UpdateAsync(productAvailability, token);
             await Session.FlushAsync(token);
